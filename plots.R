@@ -6,47 +6,32 @@ get_date_format <- function(grouping_var) {
   return(format)
 }
 
+get_year_month_for_plotting <- function(dt) {
+  dt %>%
+    mutate(year = ceiling_date(date, unit = "year"),  # ceiling is necessary to work
+           month = ceiling_date(date, unit = "month") # correctly with scale_x_datetime
+    )
+}
 
-income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
+check_filter_year <- function(dt, selected_year) {
   if (selected_year != "all") {
-    dt <- dt %>% filter(selected_year == year(year))
+    dt <- dt %>% filter(selected_year == year(date))
   }
-  
-  grouping_var_sym <- sym(grouping_var)
-  
-  bar_dt <- dt %>%                     ########
-    group_by(!!grouping_var_sym, transaction) %>%
-    summarize(sum = sum(amount), .groups = "drop")
-  
-  
-  diff_dt <- bar_dt %>%
+  return(dt)
+}
+
+get_difference <- function(dt, grouping_var_sym) {
+  dt %>% 
     group_by(!!grouping_var_sym) %>%
     summarize(max = max(sum),
               diff = diff(sum)) %>%
     ungroup() %>%
     mutate(diff_symbol = sprintf("%+d", diff)) %>%
     mutate(diff_padding = max(max)*0.05)
-  options(scipen = 10000)
-  p <- ggplot() +
-    geom_col(
-      data = bar_dt,
-      mapping = aes(
-        x = as.POSIXct(!!grouping_var_sym),
-        y = sum,
-        fill = transaction
-      ),
-      position = position_dodge2(
-        preserve = "single"
-      )
-    ) +
-    geom_text(
-      data = diff_dt,
-      mapping = aes(
-        x = as.POSIXct(!!grouping_var_sym),
-        y = max + diff_padding,
-        label = diff_symbol
-      )
-    ) +
+}
+
+plot_design <- function(plot, grouping_var, plot_title, plot_fill, col_palette, hover_tooltip) {
+  p <- plot +
     scale_x_datetime(
       labels = date_format(get_date_format(grouping_var)),
       date_breaks = grouping_var
@@ -58,8 +43,8 @@ income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
       values = col_palette
     ) +
     labs(
-      title = "Total income and expense",
-      fill = "transactions",
+      title = plot_title,
+      fill = plot_fill,
       x = grouping_var
     ) +
     theme(
@@ -67,52 +52,91 @@ income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
       axis.title.x = element_text(vjust = -0.5),
       axis.text.x = element_text(angle = 90),
     )
-  ggplotly(p,tooltip = c("transaction", "y"))
+  return(ggplotly(p, tooltip = hover_tooltip))
 }
 
-
-main_group_expense_plot <- function(dt, grouping_var, col_palette) {
+income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
   grouping_var_sym <- sym(grouping_var)
+  dt <- dt %>%
+    check_filter_year(selected_year) %>%
+    get_year_month_for_plotting()
+  
+  bar_dt <- dt %>%
+  group_by(!!grouping_var_sym, transaction) %>%
+    summarize(sum = sum(amount), .groups = "drop")
+  diff_dt <- bar_dt %>% get_difference(grouping_var_sym)
+  
+  options(scipen = 10000)
+  plot_design(
+    plot = ggplot() +
+      geom_col(
+        data = bar_dt,
+        mapping = aes(
+          x = as.POSIXct(!!grouping_var_sym),
+          y = sum,
+          fill = transaction
+        ),
+        position = position_dodge2(
+          preserve = "single"
+        )
+      ) +
+      geom_text(
+        data = diff_dt,
+        mapping = aes(
+          x = as.POSIXct(!!grouping_var_sym),
+          y = max + diff_padding,
+          label = diff_symbol
+        )
+      ),
+    grouping_var = grouping_var,
+    plot_title = "Total income and expense",
+    plot_fill = "transactions",
+    col_palette = col_palette,
+    hover_tooltip = c("transaction", "y")
+  )
+}
+
+main_group_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
+  grouping_var_sym <- sym(grouping_var)
+  dt <- dt %>%
+    check_filter_year(selected_year) %>%
+    get_year_month_for_plotting()
+  
   bar_dt <- dt %>%
     filter(transaction == "expense") %>%
     group_by(!!grouping_var_sym, category) %>%
     mutate(sum = sum(amount)) %>%
     filter(row_number() == 1) %>%
     ungroup()
-  p <- ggplot() +
-    geom_col(
-      data = bar_dt,
-      mapping = aes(
-        x = as.POSIXct(!!grouping_var_sym),
-        y = sum,
-        fill = category
+  
+  options(scipen = 10000)
+  plot_design(
+    plot = ggplot() +
+      geom_col(
+        data = bar_dt,
+        mapping = aes(
+          x = as.POSIXct(!!grouping_var_sym),
+          y = sum,
+          fill = category
+        ),
+        position = position_dodge2(width = 0.9, preserve = "single")
       ),
-      position = position_dodge2(width = 0.9, preserve = "single")
-    ) +
-    theme() +
-    scale_x_datetime(
-      labels = date_format(get_date_format(grouping_var)),
-      date_breaks = grouping_var
-    ) +
-    scale_fill_manual(
-      values = col_palette
-    ) +
-    labs(
-      title = "Expenses",
-      x = grouping_var
-    ) +
-    theme(
-      text = element_text(size = 18),
-      axis.title.x = element_text(vjust = -0.5),
-      axis.text.x = element_text(angle = 90),          # , vjust = 0.5, hjust = 1),
-    )
-  ggplotly(p,tooltip = c("category", "y"))
+    grouping_var = grouping_var,
+    plot_title = "Expenses",
+    plot_fill = "category",
+    col_palette = col_palette,
+    hover_tooltip = c("category", "y")
+  )
 }
 
 
 
-sub_group_expense_plot <- function(dt, grouping_var, category_var, col_palette) {
+sub_group_expense_plot <- function(dt, selected_year, grouping_var, category_var, col_palette) {
   grouping_var_sym <- sym(grouping_var)
+  dt <- dt %>%
+    check_filter_year(selected_year) %>%
+    get_year_month_for_plotting()
+  
   bar_dt <- dt %>%
     filter(category == !!category_var) %>% 
     filter(transaction == "expense") %>%
@@ -120,31 +144,23 @@ sub_group_expense_plot <- function(dt, grouping_var, category_var, col_palette) 
     mutate(sum = sum(amount)) %>%
     filter(row_number() == 1) %>%
     ungroup()
-  p <- ggplot() +
-    geom_col(
-      data = bar_dt,
-      mapping = aes(
-        x = as.POSIXct(!!grouping_var_sym),
-        y = sum,
-        fill = subcategory
+  
+  options(scipen = 10000)
+  plot_design(
+    plot = ggplot() +
+      geom_col(
+        data = bar_dt,
+        mapping = aes(
+          x = as.POSIXct(!!grouping_var_sym),
+          y = sum,
+          fill = subcategory
+        ),
+        position = position_dodge2(width = 0.9, preserve = "single")
       ),
-      position = position_dodge2(width = 0.9, preserve = "single")
-    ) +
-    scale_x_datetime(
-      labels = date_format(get_date_format(grouping_var)),
-      date_breaks = grouping_var
-    ) +
-    scale_fill_manual(
-      values = col_palette
-    ) +
-    labs(
-      title = "Sub group expenses",
-      x = grouping_var
-    ) +
-    theme(
-      text = element_text(size = 18),
-      axis.title.x = element_text(vjust = -0.5),
-      axis.text.x = element_text(angle = 90),      # vjust = 0.5, hjust = 1)
-    )
-  ggplotly(p,tooltip = c("subcategory", "y"))
+    grouping_var = grouping_var,
+    plot_title = "Sub category expenses",
+    plot_fill = "subcategory",
+    col_palette = col_palette,
+    hover_tooltip = c("subcategory", "y")
+  )
 }

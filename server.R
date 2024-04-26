@@ -3,43 +3,38 @@ server <- function(input, output, session) {
   
   show("plot")
   hide("table")
-  
+
   observeEvent(input$plot_type, {
     updateRadioButtons(
-      session,
-      "table_type",
+      session = session,
+      inputId = "table_type",
       selected = character(0)
     )
     updateSelectInput(
-      session,
-      "year",
-      choices = c("all", sort(unique(year(transactions_dt$year)), decreasing = TRUE)
+      session = session,
+      inputId = "year",
+      choices = c("all", get_years(transactions_dt)
       )
     )
-      show("plot")
-      hide("table")
   })
-  
+
   observeEvent(input$table_type, {
     updateRadioButtons(
-      session,
-      "plot_type",
+      session = session,
+      inputId = "plot_type",
       selected = character(0)
     )
     updateSelectInput(
-      session,
-      "year",
-      choices = sort(unique(year(transactions_dt$year)), decreasing = TRUE)
+      session = session,
+      inputId = "year",
+      choices = get_years(transactions_dt)
     )
-    show("table")
-    hide("plot")
   })
   
   output$plot <- renderPlotly({
     
-    # shinyjs::enable("grouping_var")
-    # shinyjs::enable("category_var")
-    # shinyjs::enable("color_scheme")
+    show("plot")
+    hide("table")
     
     if (input$color_scheme == "default") {
       col_palette <- c(
@@ -64,29 +59,39 @@ server <- function(input, output, session) {
     
     if (input$plot_type == "income vs expense") {
       shinyjs::disable("category_var")
+      print("plot1")
       income_expense_plot(transactions_dt, input$year, input$grouping_var, col_palette)
       
     } else if (input$plot_type == "main group expenses") {
       shinyjs::disable("category_var")
-      main_group_expense_plot(transactions_dt, input$grouping_var, col_palette)
+      print("plot2")
+      main_group_expense_plot(transactions_dt, input$year, input$grouping_var, col_palette)
       
       
     } else if (input$plot_type == "sub group expenses") {
       shinyjs::enable("category_var")
-      sub_group_expense_plot(transactions_dt, input$grouping_var, input$category_var, col_palette)
+      print("plot3")
+      sub_group_expense_plot(transactions_dt, input$year, input$grouping_var, input$category_var, col_palette)
       
     }
+    
+
+    
   })
   
   output$table <- renderDataTable({
+    
+   # show("table")
+   # hide("plot")
+    
     # shinyjs::disable("grouping_var")
     # shinyjs::disable("category_var")
     # shinyjs::disable("color_scheme")
-    if (input$table_type == "expenses") {
-      yearly_overview_table(transactions_dt, "expense", input$year)
-    } else if (input$table_type == "income") {
-      yearly_overview_table(transactions_dt, "income", input$year)
-    }
+    # if (input$table_type == "expenses") {
+    #   yearly_overview_table(transactions_dt, "expense", input$year)
+    # } else if (input$table_type == "income") {
+    #   yearly_overview_table(transactions_dt, "income", input$year)
+    # }
   })
   
 }

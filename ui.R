@@ -1,3 +1,20 @@
+get_years <- function(dt) {
+  dt %>%
+    mutate(year = year(date)) %>%
+    select(year) %>%
+    distinct() %>%
+    arrange(desc(year)) %>%
+    pull(year)
+}
+
+get_categories <- function(dt) {
+  dt %>%
+    select(category) %>%
+    distinct() %>%
+    arrange(category) %>%
+    pull(category)
+}
+
 
 ui <- page_sidebar(
   shinyjs::useShinyjs(),
@@ -9,12 +26,7 @@ ui <- page_sidebar(
            selectInput(
              inputId = "year",
              label = "Year",
-             choices = c("all", sort(unique(year(transactions_dt$year)), decreasing = TRUE)),
-             # selected = NULL,
-             # multiple = FALSE,
-             # selectize = TRUE,
-             # width = NULL,
-             # size = NULL
+             choices = c("all", get_years(transactions_dt)),
            )
     ),
     column(3,
@@ -22,23 +34,13 @@ ui <- page_sidebar(
              inputId = "grouping_var",
              label = "Transactions per",
              choices = c("month", "year"),
-             # selected = NULL,
-             # multiple = FALSE,
-             # selectize = TRUE,
-             # width = NULL,
-             # size = NULL
            )
     ),
     column(3,
            selectInput(
              inputId = "category_var",
              label = "Inspect category",
-             choices = sort(unique(transactions_dt$category)),
-             # selected = NULL,
-             # multiple = FALSE,
-             # selectize = TRUE,
-             # width = NULL,
-             # size = NULL
+             choices = get_categories(transactions_dt),
            )
     ),
     column(3,
@@ -46,42 +48,33 @@ ui <- page_sidebar(
              inputId = "color_scheme",
              label = "Color scheme",
              choices = c("default", "colorblind1" ,"colorblind2"),
-             # selected = NULL,
-             # multiple = FALSE,
-             # selectize = TRUE,
-             # width = NULL,
-             # size = NULL
            )
     )
   ),
   
   sidebar = sidebar(
     
+    selectInput(
+      inputId = "filepath",
+      label = "Select file",
+      choices = list.files("data"),
+      selected = character(0)
+    ),
+    
     radioButtons(
       inputId = "plot_type",
-      label = "Choose plot",
+      label = "Select plot",
       choices = c(
         "income vs expense", "main group expenses",
-        "sub group expenses", "other"
+        "sub group expenses"
       ),
-      #selected = NULLª,
-      #inline = FALSE,
-      #width = NULL,
-      #choiceNames = NULL,
-      #choiceValues = NULL
     ),
     
     radioButtons(
       inputId = "table_type",
-      label = "Choose table",
-      choices = c(
-        "expenses", "income"
-      ),
+      label = "Select table",
+      choices = c("expenses", "income"),
       selected = character(0),
-      #inline = FALSE,
-      #width = NULL,
-      #choiceNames = NULL,
-      #choiceValues = NULL
     ),
   ),
   
