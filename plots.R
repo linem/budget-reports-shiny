@@ -23,9 +23,11 @@ check_filter_year <- function(dt, selected_year) {
 get_difference <- function(dt, grouping_var_sym) {
   dt %>% 
     group_by(!!grouping_var_sym) %>%
-    summarize(max = max(sum),
-              diff = diff(sum)) %>%
-    ungroup() %>%
+    summarize(
+      max = max(sum),
+      diff = diff(sum),
+      .groups = "drop"
+    ) %>%
     mutate(diff_symbol = sprintf("%+d", diff)) %>%
     mutate(diff_padding = max(max)*0.05)
 }
@@ -63,7 +65,10 @@ income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
   
   bar_dt <- dt %>%
   group_by(!!grouping_var_sym, transaction) %>%
-    summarize(sum = sum(amount), .groups = "drop")
+    summarize(
+      sum = sum(amount),
+      .groups = "drop"
+    )
   diff_dt <- bar_dt %>% get_difference(grouping_var_sym)
   
   options(scipen = 10000)

@@ -26,28 +26,28 @@ ui <- page_sidebar(
            selectInput(
              inputId = "year",
              label = "Year",
-             choices = c("all", get_years(transactions_dt)),
+             choices = character(0)     #c("all", get_years(transactions_dt)),
            )
     ),
     column(3,
            selectInput(
              inputId = "grouping_var",
              label = "Transactions per",
-             choices = c("month", "year"),
+             choices = character(0),    #c("month", "year"),
            )
     ),
     column(3,
            selectInput(
              inputId = "category_var",
              label = "Inspect category",
-             choices = get_categories(transactions_dt),
+             choices = character(0)      #get_categories(transactions_dt),
            )
     ),
     column(3,
            selectInput(
              inputId = "color_scheme",
              label = "Color scheme",
-             choices = c("default", "colorblind1" ,"colorblind2"),
+             choices = character(0),      # c("default", "colorblind1" ,"colorblind2"),
            )
     )
   ),
@@ -57,17 +57,25 @@ ui <- page_sidebar(
     selectInput(
       inputId = "filepath",
       label = "Select file",
-      choices = list.files("data"),
+      choices = c("-- select --", list.files("data")),
       selected = character(0)
+    ),
+    
+    actionButton(
+      inputId = "load_action",
+      label = "Load data",
+      style = "padding:4px; font-size:80%"
     ),
     
     radioButtons(
       inputId = "plot_type",
       label = "Select plot",
       choices = c(
-        "income vs expense", "main group expenses",
+        "income vs expense",
+        "main group expenses",
         "sub group expenses"
       ),
+      selected = character(0),
     ),
     
     radioButtons(
@@ -77,7 +85,6 @@ ui <- page_sidebar(
       selected = character(0),
     ),
   ),
-  
   plotlyOutput(outputId = "plot"),
   dataTableOutput(outputId = 'table')
   

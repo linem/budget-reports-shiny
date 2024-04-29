@@ -1,37 +1,25 @@
 
-month_names <- c(
-  `1` = "Jan",
-  `2` = "Feb",
-  `3` = "Mar",
-  `4` = "Apr",
-  `5` = "May",
-  `6` = "Jun",
-  `7` = "Jul",
-  `8` = "Aug",
-  `9` = "Sep",
-  `10` = "Oct",
-  `11` = "Nov",
-  `12` = "Dec"
-)
-
-transaction_type <- "income"
-selected_year <- "2024"
-
 calculate_cat_year_sum <- function(dt) {
   dt %>%
     group_by(year, month, category, subcategory) %>%
-    summarize(sum_month = sum(amount)) %>%
-    ungroup()
+    summarize(sum_month = sum(amount), .groups = "drop")
 }
 
 to_wide_format <- function(dt) {
   dt %>%
-    pivot_wider(id_cols = c("category", "subcategory"), names_from = month, values_from = sum_month) %>%
+    pivot_wider(
+      id_cols = c("category", "subcategory"),
+      names_from = month,
+      values_from = sum_month
+    ) %>%
     mutate_if(is.numeric, replace_na, 0)
 }
 
 generate_missing_columns_of_NA <- function(dt) {
-  months <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  months <- c(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  )
   month_dt <- dt %>%
     select(-c(category, subcategory))
   
@@ -89,17 +77,22 @@ calculate_col_summary <- function(dt) {
 yearly_overview_table <- function(dt, transaction_type, selected_year) {
   table_dt <- transactions_dt %>%
     filter(transaction == transaction_type) %>%
-    filter(selected_year == year(year)) %>%
-    arrange(month) %>% 
-    mutate(month = month(month, label = TRUE)) %>%
+    filter(selected_year == year(date)) %>%
+    arrange(date) %>% 
+    mutate(month = month(date, label = TRUE),
+           year = year(date)
+    ) %>%
     calculate_cat_year_sum() %>%
     to_wide_format() %>%
     generate_missing_columns_of_NA() %>%
     calculate_row_summary() %>%
-    calculate_col_summary() %>%
-    DT::datatable()
+    calculate_col_summary()
+  n_rows <- nrow(table_dt)
+  DT::datatable(
+    data = table_dt,
+    options = list(
+      paging =TRUE,
+      pageLength = n_rows
+    )
+  )
 }
-
-yearly_overview_table(transactions_dt, transaction_type, selected_year)
-
-
