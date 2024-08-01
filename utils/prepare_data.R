@@ -17,19 +17,18 @@ parser <- add_argument(
   parser,
   "--input_dir",
   help = "directory of input files",
-  default = "data_raw"
 )
 parser <- add_argument(
   parser,
   "--date_col",
   help = "column name for the date",
-  default = "Reskontradatum"
+  default = "date"
 )
 parser <- add_argument(
   parser,
   "--amount_col",
   help = "column name for the amount",
-  default = "Belopp"
+  default = "amount"
 )
 parser <- add_argument(
   parser,
@@ -86,7 +85,7 @@ parse_file <- function(fp, column_names) {
 transactions <- map(files, parse_file, column_names) %>%
   bind_rows()
 
-output_dir <- "data"
+output_dir <- "data_finished"
 create_dir_if_missing(output_dir)
 
 output_file <- get_final_output_filename(
