@@ -20,6 +20,9 @@ Run the helper script `utils/prepare_data.R` to process the input data for use i
 ./utils/prepare_data.R input_directory
 
 # help
+positional arguments:
+  input_dir           directory of input files
+
 flags:
   -h, --help          show this help message and exit
   -w, -w              allowed to overwrite output file
@@ -32,8 +35,8 @@ optional arguments:
                       maincategory]
   -s, --subcat_col    column name for the sub category [default:
                       subcategory]
-  -o, --output_fname  name of the output file in data folder [default:
-                      transactions_YYMMDD.csv]
+  -o, --output_fname  name of the output file in data_finished folder [default:
+                      transactions_YYYY-MM-DD.csv]
 ```
 
 

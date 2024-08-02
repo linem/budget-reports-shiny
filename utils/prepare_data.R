@@ -15,7 +15,7 @@ parser <- arg_parser(
 
 parser <- add_argument(
   parser,
-  "--input_dir",
+  "input_dir",
   help = "directory of input files",
 )
 parser <- add_argument(
@@ -45,7 +45,7 @@ parser <- add_argument(
 parser <- add_argument(
   parser,
   "--output_fname",
-  help = "name of the output file in data folder [default: transactions_YYMMDD.csv]"
+  help = "name of the output file in data_finished folder [default: transactions_YYYY-MM-DD.csv]"
 )
 parser <- add_argument(
   parser,
