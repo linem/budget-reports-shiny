@@ -36,28 +36,6 @@ format_amount <- function(dt) {
 }
 
 
-# add_month_and_year <- function(dt) {
-#   dt %>%
-#     mutate(date = ymd(date)) %>%
-#     mutate(
-#       month = as_date(
-#         paste(
-#           year(date),
-#           month(date),
-#           "01",
-#           sep = "-"
-#         )
-#       )
-#     ) %>%
-#     mutate(year = as_date(
-#       paste(
-#         year(date),
-#         "01-01",
-#         sep = "-"
-#       )
-#     )
-#   )
-# }
 add_month_and_year <- function(dt) {
   dt %>%
     mutate(date = ymd(date)) %>%
