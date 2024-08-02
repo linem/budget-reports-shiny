@@ -10,6 +10,7 @@ Input file(s) must be in csv format and contain at least 4 columns
 	- annotation for main category
 - subcategory
 	- annotation for sub category
+
 Place any/all input files together in a directory
 
 Tip: Use `reimbursement` as maincategory for income that should instead reduce expenses.
