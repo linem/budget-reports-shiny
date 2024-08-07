@@ -1,38 +1,10 @@
-get_date_format <- function(grouping_var) {
-  format = "%Y"
-  if (grouping_var == "month") {
-    format = paste(format, "%m", sep = "-")
-  }
-  return(format)
-}
 
-get_year_month_for_plotting <- function(dt) {
-  dt %>%
-    mutate(year = ceiling_date(date, unit = "year"),  # ceiling is necessary to work
-           month = ceiling_date(date, unit = "month") # correctly with scale_x_datetime
-    )
-}
-
-check_filter_year <- function(dt, selected_year) {
-  if (selected_year != "all") {
-    dt <- dt %>% filter(selected_year == year(date))
-  }
-  return(dt)
-}
-
-get_difference <- function(dt, grouping_var_sym) {
-  dt %>% 
-    group_by(!!grouping_var_sym) %>%
-    summarize(
-      max = max(sum),
-      diff = diff(sum),
-      .groups = "drop"
-    ) %>%
-    mutate(diff_symbol = sprintf("%+d", diff)) %>%
-    mutate(diff_padding = max(max)*0.05)
-}
-
-plot_design <- function(plot, grouping_var, plot_title, plot_fill, col_palette, hover_tooltip) {
+plot_design <- function(plot,
+                        grouping_var,
+                        plot_title,
+                        plot_fill,
+                        col_palette,
+                        hover_tooltip) {
   p <- plot +
     scale_x_datetime(
       labels = date_format(get_date_format(grouping_var)),
@@ -57,18 +29,22 @@ plot_design <- function(plot, grouping_var, plot_title, plot_fill, col_palette, 
   return(ggplotly(p, tooltip = hover_tooltip))
 }
 
-income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
+income_expense_plot <- function(dt,
+                                selected_year,
+                                grouping_var,
+                                col_palette) {
   grouping_var_sym <- sym(grouping_var)
+  
   dt <- dt %>%
-    check_filter_year(selected_year) %>%
-    get_year_month_for_plotting()
+    filter_year(selected_year)
   
   bar_dt <- dt %>%
-  group_by(!!grouping_var_sym, transaction) %>%
+    group_by(!!grouping_var_sym, transtype) %>%
     summarize(
-      sum = sum(amount),
+      sum = sum(sum_month),
       .groups = "drop"
     )
+  
   diff_dt <- bar_dt %>% get_difference(grouping_var_sym)
   
   options(scipen = 10000)
@@ -79,7 +55,7 @@ income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
         mapping = aes(
           x = as.POSIXct(!!grouping_var_sym),
           y = sum,
-          fill = transaction
+          fill = transtype
         ),
         position = position_dodge2(
           preserve = "single"
@@ -97,20 +73,24 @@ income_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
     plot_title = "Total income and expense",
     plot_fill = "transactions",
     col_palette = col_palette,
-    hover_tooltip = c("transaction", "y")
+    hover_tooltip = c("transtype", "y")
   )
 }
 
-main_group_expense_plot <- function(dt, selected_year, grouping_var, col_palette) {
+main_group_expense_plot <- function(dt,
+                                    selected_year,
+                                    grouping_var,
+                                    col_palette) {
+  
   grouping_var_sym <- sym(grouping_var)
+  
   dt <- dt %>%
-    check_filter_year(selected_year) %>%
-    get_year_month_for_plotting()
+    filter_year(selected_year)
   
   bar_dt <- dt %>%
-    filter(transaction == "expense") %>%
-    group_by(!!grouping_var_sym, category) %>%
-    mutate(sum = sum(amount)) %>%
+    filter(transtype == "expense") %>%
+    group_by(!!grouping_var_sym, maincategory) %>%
+    mutate(sum = sum(sum_month)) %>%
     filter(row_number() == 1) %>%
     ungroup()
   
@@ -122,31 +102,36 @@ main_group_expense_plot <- function(dt, selected_year, grouping_var, col_palette
         mapping = aes(
           x = as.POSIXct(!!grouping_var_sym),
           y = sum,
-          fill = category
+          fill = maincategory
         ),
         position = position_dodge2(width = 0.9, preserve = "single")
       ),
     grouping_var = grouping_var,
     plot_title = "Expenses",
-    plot_fill = "category",
+    plot_fill = "maincategory",
     col_palette = col_palette,
-    hover_tooltip = c("category", "y")
+    hover_tooltip = c("maincategory", "y")
   )
 }
 
 
 
-sub_group_expense_plot <- function(dt, selected_year, grouping_var, category_var, col_palette) {
+sub_group_expense_plot <- function(dt,
+                                   selected_year,
+                                   grouping_var,
+                                   category_var,
+                                   col_palette) {
+  
   grouping_var_sym <- sym(grouping_var)
+  
   dt <- dt %>%
-    check_filter_year(selected_year) %>%
-    get_year_month_for_plotting()
+    filter_year(selected_year)
   
   bar_dt <- dt %>%
-    filter(category == !!category_var) %>% 
-    filter(transaction == "expense") %>%
+    filter(maincategory == !!category_var) %>% 
+    filter(transtype == "expense") %>%
     group_by(!!grouping_var_sym, subcategory) %>%
-    mutate(sum = sum(amount)) %>%
+    mutate(sum = sum(sum_month)) %>%
     filter(row_number() == 1) %>%
     ungroup()
   
