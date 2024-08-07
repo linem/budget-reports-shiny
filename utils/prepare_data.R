@@ -85,7 +85,7 @@ parse_file <- function(fp, column_names) {
 transactions <- map(files, parse_file, column_names) %>%
   bind_rows()
 
-output_dir <- "data_finished"
+output_dir <- "data_ready"
 create_dir_if_missing(output_dir)
 
 output_file <- get_final_output_filename(

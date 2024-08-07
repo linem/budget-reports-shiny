@@ -1,20 +1,3 @@
-get_years <- function(dt) {
-  dt %>%
-    mutate(year = year(date)) %>%
-    select(year) %>%
-    distinct() %>%
-    arrange(desc(year)) %>%
-    pull(year)
-}
-
-get_categories <- function(dt) {
-  dt %>%
-    select(category) %>%
-    distinct() %>%
-    arrange(category) %>%
-    pull(category)
-}
-
 
 ui <- page_sidebar(
   shinyjs::useShinyjs(),
@@ -26,28 +9,32 @@ ui <- page_sidebar(
            selectInput(
              inputId = "year",
              label = "Year",
-             choices = character(0)     #c("all", get_years(transactions_dt)),
+             choices = character(0)
+             #choices = c("all", get_years(transactions_dt))
            )
     ),
     column(3,
            selectInput(
              inputId = "grouping_var",
              label = "Transactions per",
-             choices = character(0),    #c("month", "year"),
+             choices = character(0)
+             #choices = c("month", "year")
            )
     ),
     column(3,
            selectInput(
              inputId = "category_var",
              label = "Inspect category",
-             choices = character(0)      #get_categories(transactions_dt),
+             choices = character(0)
+             #choices = get_categories(transactions_dt)
            )
     ),
     column(3,
            selectInput(
              inputId = "color_scheme",
              label = "Color scheme",
-             choices = character(0),      # c("default", "colorblind1" ,"colorblind2"),
+             choices = character(0)
+             #choices =  c("default", "colorblind1" ,"colorblind2")
            )
     )
   ),
@@ -57,7 +44,7 @@ ui <- page_sidebar(
     selectInput(
       inputId = "filepath",
       label = "Select file",
-      choices = c("-- select --", list.files("data")),
+      choices = c("-- select --", list.files("data_ready")),
       selected = character(0)
     ),
     
@@ -72,8 +59,8 @@ ui <- page_sidebar(
       label = "Select plot",
       choices = c(
         "income vs expense",
-        "main group expenses",
-        "sub group expenses"
+        "maincat expenses",
+        "subcat expenses"
       ),
       selected = character(0),
     ),
